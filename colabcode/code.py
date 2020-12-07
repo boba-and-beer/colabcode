@@ -14,7 +14,7 @@ EXTENSIONS = ["ms-python.python", "ms-toolsai.jupyter"]
 
 
 class ColabCode:
-    def __init__(self, port=10000, password=None, authtoken=None, mount_drive=False):
+    def __init__(self, port=10000, password=None, authtoken=None, mount_drive=False, code_cmd=None):
         self.port = port
         self.password = password
         self.authtoken = authtoken
@@ -22,8 +22,9 @@ class ColabCode:
         self._install_code()
         self._install_extensions()
         self._start_server()
+        self.code_cmd = code_cmd
         self._run_code()
-
+        
     def _install_code(self):
         subprocess.run(
             ["wget", "https://code-server.dev/install.sh"], stdout=subprocess.PIPE
@@ -48,10 +49,14 @@ class ColabCode:
         os.system(f"fuser -n tcp -k {self.port}")
         if self._mount and colab_env:
             drive.mount("/content/drive")
-        if self.password:
-            code_cmd = f"PASSWORD={self.password} code-server --port {self.port} --disable-telemetry"
+        # Insert Personal Command Here If Required 
+        if self.code_cmd is None:
+            if self.password:
+                code_cmd = f"PASSWORD={self.password} code-server --port {self.port} --disable-telemetry"
+            else:
+                code_cmd = f"code-server --port {self.port} --auth none --disable-telemetry"
         else:
-            code_cmd = f"code-server --port {self.port} --auth none --disable-telemetry"
+            code_cmd = self.code_cmd
         with subprocess.Popen(
             [code_cmd],
             shell=True,
